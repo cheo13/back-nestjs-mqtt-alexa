@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Ingredients {
+  Ron
+  Vodka
+  Tequila
+  Aguardiente
+  JuiceLemon
+  JuiceOrange
+  CocaCola
+  Granadine
+  Soda
+  WaterTonic
+}
+
+enum OnzaLevel {
+  CeroFiveOz
+  OneOz
+  OneFiveOz
+  TwoOz
+  TwoFiveOz
+  ThreeOz
+  ThreeFiveOz
+  FourOz
+  FourFiveOz
+  FiveOz
+  FiveFiveOz
+  SixOz
+  SixFiveOz
+  SevenOz
+  SevenFiveOz
+  EightOz
+  EightFiveOz
+  NineOz
+  NineFiveOz
+  TenOz
+}
+
+model DrinkType {
+  id      Int      @id @default(autoincrement())
+  name    String   @unique
+  drinks  Drink[]
+}
+
+model DrinkIngredient {
+  id          Int          @id @default(autoincrement())
+  drinkId     Int
+  ingredient  Ingredients
+  amountOz    OnzaLevel
+
+  drink       Drink        @relation(fields: [drinkId], references: [id])
+}
+
+model PortionServed {
+  id          Int          @id @default(autoincrement())
+  drinkId     Int
+  orderId     Int
+  ingredient  Ingredients
+  amountOz    OnzaLevel
+  createdAt   DateTime     @default(now())
+
+  drink       Drink        @relation(fields: [drinkId], references: [id])
+  order       Order        @relation(fields: [orderId], references: [id])
+}
+
+model AdminBar {
+  id          Int          @id @default(autoincrement())
+  adminId     String       @unique
+  password    String
+  createdAt   DateTime     @default(now())
+}
+
+model Drink {
+  id              Int               @id @default(autoincrement())
+  name            String
+  price           Decimal           @default(0.0)
+  imageUrl        String?
+  drinkTypeId     Int
+  createdAt       DateTime          @default(now())
+
+  type            DrinkType         @relation(fields: [drinkTypeId], references: [id])
+  ingredients     DrinkIngredient[]
+  orders          Order[]
+  transactions    Transaction[]
+  portionsServed  PortionServed[]
+}
+
+model Order {
+  id              Int               @id @default(autoincrement())
+  drinkId         Int
+  origin          String
+  statusOrder     String            @default("En proceso")
+  createdAt       DateTime          @default(now())
+
+  drink           Drink             @relation(fields: [drinkId], references: [id])
+  transaction     Transaction?
+  portionsServed  PortionServed[]
+}
+
+model Transaction {
+  id              Int               @id @default(autoincrement())
+  orderId         Int               @unique
+  drinkId         Int
+  amount          Decimal
+  statusTrans     String            @default("Pendiente")
+  createdAt       DateTime          @default(now())
+  //updatedAt       DateTime          @updatedAt
+
+  order           Order             @relation(fields: [orderId], references: [id])
+  drink           Drink             @relation(fields: [drinkId], references: [id]) 
+}
